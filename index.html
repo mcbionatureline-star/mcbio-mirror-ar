@@ -136,54 +136,115 @@ function displayProduct(p) {
    activeConf = p;
 }
 
+
 const videoElement = document.getElementById('input_video');
 const canvasElement = document.getElementById('output_canvas');
 const canvasCtx = canvasElement.getContext('2d');
 
-function onResults(results) {
-    canvasElement.width = window.innerWidth;
-    canvasElement.height = window.innerHeight;
-    canvasCtx.save();
-    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-    canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-    
-    if (results.multiFaceLandmarks && activeConf) {
-        for (const landmarks of results.multiFaceLandmarks) {
-            canvasCtx.beginPath();
-            if (activeConf.eyesOnly) {
-                [33, 133, 159, 145, 362, 263, 386, 374].forEach((idx, i) => {
-                    let x = landmarks[idx].x * canvasElement.width;
-                    let y = landmarks[idx].y * canvasElement.height;
-                    if(i === 0 || i === 4) canvasCtx.moveTo(x,y); else canvasCtx.lineTo(x,y);
-                });
-            } else {
-                [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109].forEach((idx, i) => {
-                    let x = landmarks[idx].x * canvasElement.width;
-                    let y = landmarks[idx].y * canvasElement.height;
-                    if(i===0) canvasCtx.moveTo(x,y); else canvasCtx.lineTo(x,y);
-                });
-            }
-            canvasCtx.closePath();
-            canvasCtx.globalCompositeOperation = "screen"; 
-            canvasCtx.shadowBlur = activeConf.glow;
-            canvasCtx.shadowColor = activeConf.color;
-            canvasCtx.strokeStyle = activeConf.color;
-            canvasCtx.lineWidth = 6; 
-            canvasCtx.stroke();
-            canvasCtx.globalAlpha = 0.15;
-            canvasCtx.fillStyle = activeConf.color;
-            canvasCtx.fill();
-            canvasCtx.globalAlpha = 1.0;
-        }
+// Livello separato per l'effetto cosmetico (bordi sfumati)
+const fx = document.createElement('canvas');
+const fxCtx = fx.getContext('2d');
+
+// Contorno viso e zone da ESCLUDERE dall'effetto (occhi e labbra)
+const FACE = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
+const LEFT_EYE = [33,246,161,160,159,158,157,173,133,155,154,153,145,144,163,7];
+const RIGHT_EYE = [362,398,384,385,386,387,388,466,263,249,390,373,374,380,381,382];
+const LIPS = [61,185,40,39,37,0,267,269,270,409,291,375,321,405,314,17,84,181,91,146];
+// Palpebra inferiore (per il contorno occhi)
+const LEFT_LOWER = [33,7,163,144,145,153,154,155,133];
+const RIGHT_LOWER = [362,382,381,380,374,373,390,249,263];
+
+function resizeCanvas() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.round(window.innerWidth * dpr);
+    const h = Math.round(window.innerHeight * dpr);
+    if (canvasElement.width !== w || canvasElement.height !== h) {
+        canvasElement.width = w; canvasElement.height = h;
+        fx.width = w; fx.height = h;
     }
-    canvasCtx.restore();
+    return dpr;
+}
+
+function onResults(results) {
+    const dpr = resizeCanvas();
+    const W = canvasElement.width, H = canvasElement.height;
+    const img = results.image;
+    const iw = img.videoWidth || img.width, ih = img.videoHeight || img.height;
+
+    // Il video riempie lo schermo SENZA deformarsi (come "cover")
+    const scale = Math.max(W / iw, H / ih);
+    const dw = iw * scale, dh = ih * scale;
+    const dx = (W - dw) / 2, dy = (H - dh) / 2;
+
+    canvasCtx.globalCompositeOperation = 'source-over';
+    canvasCtx.globalAlpha = 1;
+    canvasCtx.shadowBlur = 0;
+    canvasCtx.clearRect(0, 0, W, H);
+    canvasCtx.imageSmoothingEnabled = true;
+    canvasCtx.imageSmoothingQuality = 'high';
+    canvasCtx.drawImage(img, dx, dy, dw, dh);
+
+    if (!(results.multiFaceLandmarks && results.multiFaceLandmarks.length && activeConf)) return;
+    const lm = results.multiFaceLandmarks[0];
+    const pt = (i) => ({ x: dx + lm[i].x * dw, y: dy + lm[i].y * dh });
+
+    // Livello effetto: forma disegnata fuori schermo, ne resta solo l'ombra sfumata
+    const OFF = W * 3;
+    fxCtx.clearRect(0, 0, W, H);
+    fxCtx.save();
+    fxCtx.shadowColor = activeConf.color;
+    fxCtx.shadowOffsetX = OFF;
+    fxCtx.shadowOffsetY = 0;
+    fxCtx.shadowBlur = 26 * dpr;   // morbidezza dei bordi (aumenta = più sfumato)
+    fxCtx.fillStyle = '#000';
+    fxCtx.beginPath();
+    const addPoly = (ids) => {
+        ids.forEach((idx, i) => {
+            const p = pt(idx);
+            if (i === 0) fxCtx.moveTo(p.x - OFF, p.y); else fxCtx.lineTo(p.x - OFF, p.y);
+        });
+        fxCtx.closePath();
+    };
+    if (activeConf.eyesOnly) {
+        // Fascia morbida sotto gli occhi
+        [LEFT_LOWER, RIGHT_LOWER].forEach(lower => {
+            const down = lower.map(idx => { const p = pt(idx); return { x: p.x - OFF, y: p.y + 0.035 * dh }; });
+            lower.forEach((idx, i) => { const p = pt(idx); if (i === 0) fxCtx.moveTo(p.x - OFF, p.y); else fxCtx.lineTo(p.x - OFF, p.y); });
+            down.reverse().forEach(p => fxCtx.lineTo(p.x, p.y));
+            fxCtx.closePath();
+        });
+        fxCtx.fill();
+    } else {
+        addPoly(FACE); addPoly(LEFT_EYE); addPoly(RIGHT_EYE); addPoly(LIPS);
+        fxCtx.fill('evenodd');      // occhi e labbra restano liberi
+    }
+    fxCtx.restore();
+
+    // 1) Colore integrato nella pelle (la texture resta visibile)
+    canvasCtx.globalCompositeOperation = 'soft-light';
+    canvasCtx.globalAlpha = 0.6;
+    canvasCtx.drawImage(fx, 0, 0);
+    // 2) Leggera luminosità "pelle idratata"
+    canvasCtx.globalCompositeOperation = 'screen';
+    canvasCtx.globalAlpha = 0.10;
+    canvasCtx.drawImage(fx, 0, 0);
+
+    canvasCtx.globalCompositeOperation = 'source-over';
+    canvasCtx.globalAlpha = 1;
 }
 
 const faceMesh = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
-faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5 });
+faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
 faceMesh.onResults(onResults);
 
-const camera = new Camera(videoElement, { onFrame: async () => { await faceMesh.send({image: videoElement}); }, width: 1280, height: 720 });
+// Su telefono (verticale) chiediamo il video in verticale, in alta risoluzione
+const portrait = window.innerHeight > window.innerWidth;
+const camera = new Camera(videoElement, {
+    onFrame: async () => { await faceMesh.send({image: videoElement}); },
+    facingMode: 'user',
+    width: portrait ? 720 : 1280,
+    height: portrait ? 1280 : 720
+});
 camera.start();
 </script>
 </body>
