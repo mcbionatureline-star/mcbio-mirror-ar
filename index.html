@@ -39,6 +39,7 @@
        .qr-box { display: flex; flex-direction: column; align-items: center; gap: 5px; }
        #qrcode { background: white; padding: 5px; border-radius: 4px; cursor: pointer; transition: 0.3s; }
        #qrcode:hover { transform: scale(1.05); }
+       .sim-note { margin: 12px 0 0; text-align: center; color: rgba(255,255,255,0.55); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
        .qr-tip { color: var(--gold); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; animation: pulse 2s infinite; }
 
        @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
@@ -74,6 +75,7 @@
                <span class="qr-tip">Tocca il QR per acquistare</span>
            </div>
        </div>
+       <p class="sim-note">Simulazione indicativa: il risultato reale può variare</p>
    </div>
    <div id="btn-reset" class="btn-back" onclick="location.reload()">TORNA AI PERCORSI</div>
    <div id="product-ui"><div id="shelf-list" class="shelf"></div></div>
@@ -84,21 +86,20 @@ const SITE = "https://mcbionatureline.com";
 
 const DATABASE = {
    'pura': [
-       { name: 'MOUSSE AL LIMONE', url: '/product/mousse-detergente-al-limone/', color:'#FFF176', glow:35, soft:0.30, shine:0.04 },
-       { name: 'TONICO RINFRESCANTE', url: '/product/tonico-viso-idratante-rinfrescante/', color:'#B3E5FC', glow:40, soft:0.45, shine:0.06 },
-       { name: 'LATTE DETERGENTE', url: '/product/latte-detergente/', color:'#F5F5F5', glow:30, soft:0.25, shine:0.03 },
-       { name: 'SIERO ENZIMATICO', url: '/product/siero-esfoliante-enzimatico/', color:'#E6EE9C', glow:45, soft:0.25, shine:0.03 }
+       { name: 'MOUSSE AL LIMONE', url: '/product/mousse-detergente-al-limone/', color:'#FFF176', glow:35, soft:0.42, shine:0.05 },
+       { name: 'TONICO RINFRESCANTE', url: '/product/tonico-viso-idratante-rinfrescante/', color:'#B3E5FC', glow:40, soft:0.55, shine:0.06 },
+       { name: 'SIERO ENZIMATICO', url: '/product/siero-esfoliante-enzimatico/', color:'#E6EE9C', glow:45, soft:0.40, shine:0.05 }
    ],
    'sorgente': [
        { name: 'SIERO IDRATANTE', url: '/product/siero-viso-idratante-lenitivo/', color:'#81D4FA', glow:55, soft:0.40, shine:0.03 },
-       { name: 'SIERO RIVITALIZZANTE', url: '/product/siero-anti-age-rivitalizzante/', color:'#D7B8E8', glow:60, soft:0.28, shine:0.04 },
-       { name: 'FILLER LIFTING', url: '/product/filler-effetto-lifting/', color:'#E0F7FA', glow:50, soft:0.45, shine:0.06 },
+       { name: 'SIERO RIVITALIZZANTE', url: '/product/siero-anti-age-rivitalizzante/', color:'#D7B8E8', glow:60, soft:0.38, shine:0.05 },
+       { name: 'FILLER LIFTING', url: '/product/filler-effetto-lifting/', color:'#E0F7FA', glow:50, soft:0.55, shine:0.06 },
        { name: 'CONTORNO OCCHI', url: '/product/contorno-occhi-con-effetto-schiarente/', color:'#E0E0E0', glow:40, eyesOnly: true }
    ],
    'forza': [
-       { name: 'CREMA ANTI-AGE', url: '/product/crema-intensiva-anti-age/', color:'#F4A6A0', glow:45, soft:0.25, shine:0.03 },
-       { name: 'CREMA NUTRIENTE 24H', url: '/product/crema-viso-nutriente-24-h-idratazione-intensa-e-prolungata/', color:'#F5D98B', glow:50, soft:0.35, shine:0.06 },
-       { name: 'CREMA MANTENIMENTO', url: '/product/crema-intensiva-naturale-di-mantenimento/', color:'#A5E8CF', glow:50, soft:0.25, shine:0.04 }
+       { name: 'CREMA ANTI-AGE', url: '/product/crema-intensiva-anti-age/', color:'#F4A6A0', glow:45, soft:0.38, shine:0.05 },
+       { name: 'CREMA NUTRIENTE 24H', url: '/product/crema-viso-nutriente-24-h-idratazione-intensa-e-prolungata/', color:'#F5D98B', glow:50, soft:0.48, shine:0.07 },
+       { name: 'CREMA MANTENIMENTO', url: '/product/crema-intensiva-naturale-di-mantenimento/', color:'#A5E8CF', glow:50, soft:0.38, shine:0.05 }
    ]
 };
 
