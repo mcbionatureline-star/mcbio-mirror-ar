@@ -84,21 +84,21 @@ const SITE = "https://mcbionatureline.com";
 
 const DATABASE = {
    'pura': [
-       { name: 'MOUSSE AL LIMONE', url: '/product/mousse-detergente-al-limone/', color:'#FFF176', glow:35 },
-       { name: 'TONICO RINFRESCANTE', url: '/product/tonico-viso-idratante-rinfrescante/', color:'#B3E5FC', glow:40 },
-       { name: 'LATTE DETERGENTE', url: '/product/latte-detergente/', color:'#F5F5F5', glow:30 },
-       { name: 'SIERO ENZIMATICO', url: '/product/siero-esfoliante-enzimatico/', color:'#CCFF00', glow:45 }
+       { name: 'MOUSSE AL LIMONE', url: '/product/mousse-detergente-al-limone/', color:'#FFF176', glow:35, soft:0.30, shine:0.04 },
+       { name: 'TONICO RINFRESCANTE', url: '/product/tonico-viso-idratante-rinfrescante/', color:'#B3E5FC', glow:40, soft:0.45, shine:0.06 },
+       { name: 'LATTE DETERGENTE', url: '/product/latte-detergente/', color:'#F5F5F5', glow:30, soft:0.25, shine:0.03 },
+       { name: 'SIERO ENZIMATICO', url: '/product/siero-esfoliante-enzimatico/', color:'#E6EE9C', glow:45, soft:0.25, shine:0.03 }
    ],
    'sorgente': [
-       { name: 'SIERO IDRATANTE', url: '/product/siero-viso-idratante-lenitivo/', color:'#81D4FA', glow:55 },
-       { name: 'SIERO RIVITALIZZANTE', url: '/product/siero-anti-age-rivitalizzante/', color:'#9C27B0', glow:60 },
-       { name: 'FILLER LIFTING', url: '/product/filler-effetto-lifting/', color:'#E0F7FA', glow:50 },
+       { name: 'SIERO IDRATANTE', url: '/product/siero-viso-idratante-lenitivo/', color:'#81D4FA', glow:55, soft:0.40, shine:0.03 },
+       { name: 'SIERO RIVITALIZZANTE', url: '/product/siero-anti-age-rivitalizzante/', color:'#D7B8E8', glow:60, soft:0.28, shine:0.04 },
+       { name: 'FILLER LIFTING', url: '/product/filler-effetto-lifting/', color:'#E0F7FA', glow:50, soft:0.45, shine:0.06 },
        { name: 'CONTORNO OCCHI', url: '/product/contorno-occhi-con-effetto-schiarente/', color:'#E0E0E0', glow:40, eyesOnly: true }
    ],
    'forza': [
-       { name: 'CREMA ANTI-AGE', url: '/product/crema-intensiva-anti-age/', color:'#FF4D4D', glow:45 },
-       { name: 'CREMA NUTRIENTE 24H', url: '/product/crema-viso-nutriente-24-h-idratazione-intensa-e-prolungata/', color:'#FFD700', glow:50 },
-       { name: 'CREMA MANTENIMENTO', url: '/product/crema-intensiva-naturale-di-mantenimento/', color:'#00FFB3', glow:50 }
+       { name: 'CREMA ANTI-AGE', url: '/product/crema-intensiva-anti-age/', color:'#F4A6A0', glow:45, soft:0.25, shine:0.03 },
+       { name: 'CREMA NUTRIENTE 24H', url: '/product/crema-viso-nutriente-24-h-idratazione-intensa-e-prolungata/', color:'#F5D98B', glow:50, soft:0.35, shine:0.06 },
+       { name: 'CREMA MANTENIMENTO', url: '/product/crema-intensiva-naturale-di-mantenimento/', color:'#A5E8CF', glow:50, soft:0.25, shine:0.04 }
    ]
 };
 
@@ -222,11 +222,11 @@ function onResults(results) {
 
     // 1) Colore integrato nella pelle (la texture resta visibile)
     canvasCtx.globalCompositeOperation = 'soft-light';
-    canvasCtx.globalAlpha = 0.6;
+    canvasCtx.globalAlpha = (activeConf.soft !== undefined ? activeConf.soft : 0.6);
     canvasCtx.drawImage(fx, 0, 0);
     // 2) Leggera luminosità "pelle idratata"
     canvasCtx.globalCompositeOperation = 'screen';
-    canvasCtx.globalAlpha = 0.10;
+    canvasCtx.globalAlpha = (activeConf.shine !== undefined ? activeConf.shine : 0.10);
     canvasCtx.drawImage(fx, 0, 0);
 
     canvasCtx.globalCompositeOperation = 'source-over';
