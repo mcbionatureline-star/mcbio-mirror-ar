@@ -157,7 +157,7 @@ const canvasCtx = canvasElement.getContext('2d');
 let split = 0.5;
 
 // INTENSITA' DEGLI EFFETTI: 1 = delicato, 1.6 = visibile, 2 = deciso
-const INTENSITA = 1.6;
+const INTENSITA = 2.4;
 const cmp = document.getElementById('compare');
 let dragging = false;
 function setSplit(fr) { split = Math.min(1, Math.max(0, fr)); cmp.style.left = (split * 100) + '%'; }
@@ -347,7 +347,7 @@ function onResults(results) {
         });
         maskInto(tmpS);
         ctx.globalCompositeOperation = 'screen';
-        ctx.globalAlpha = Math.min(0.7, cfg.glow * INTENSITA) * ap;
+        ctx.globalAlpha = Math.min(0.35, cfg.glow * INTENSITA) * ap;
         ctx.drawImage(tmpS.c, 0, 0, W, H);
     }
 
