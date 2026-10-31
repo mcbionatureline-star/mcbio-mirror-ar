@@ -69,6 +69,7 @@
            <div class="path-btn" onclick="openPath('pura')">PURA LINFA</div>
            <div class="path-btn" onclick="openPath('sorgente')">SORGENTE</div>
            <div class="path-btn" onclick="openPath('forza')">FORZA NATURA</div>
+           <div class="path-btn" onclick="openPath('makeup')">MAKE-UP</div>
        </div>
    </div>
 
@@ -107,6 +108,15 @@ const DATABASE = {
        { name: 'CREMA ANTI-AGE', url: '/product/crema-intensiva-anti-age/', color:'#F4A6A0', soft:0.38, shine:0.05, smooth:0.25, even:0.35, glow:0.14 },
        { name: 'CREMA NUTRIENTE 24H', url: '/product/crema-viso-nutriente-24-h-idratazione-intensa-e-prolungata/', color:'#F5D98B', soft:0.48, shine:0.07, smooth:0.12, even:0.25, glow:0.24 },
        { name: 'CREMA MANTENIMENTO', url: '/product/crema-intensiva-naturale-di-mantenimento/', color:'#A5E8CF', soft:0.38, shine:0.05, smooth:0.12, even:0.30, glow:0.12 }
+   ],
+   'makeup': [
+       { name: 'ROSSETTO DUSTY ROSE', url: '/?s=rossetto&post_type=product', kind:'lips', color:'#B8837D', cover:0.50 },
+       { name: 'ROSSETTO TERRACOTTA NUDE', url: '/?s=rossetto&post_type=product', kind:'lips', color:'#C4846F', cover:0.50 },
+       { name: 'FONDOTINTA 10 LIGHT WARM', url: '/?s=fondotinta&post_type=product', color:'#E4CDB8', cover:0.25, smooth:0.20, even:0.40, soft:0.20, shine:0.02 },
+       { name: 'FONDOTINTA 20 MEDIUM NEUTRAL', url: '/?s=fondotinta&post_type=product', color:'#D2AC8A', cover:0.25, smooth:0.20, even:0.40, soft:0.20, shine:0.02 },
+       { name: 'CORRETTORE 10 LIGHT WARM', url: '/?s=correttore&post_type=product', eyesOnly:true, color:'#EFCFA8', cover:0.45, smooth:0.22, even:0.40, soft:0.20, shine:0.10 },
+       { name: 'CORRETTORE 20 MEDIUM WARM', url: '/?s=correttore&post_type=product', eyesOnly:true, color:'#DDA974', cover:0.45, smooth:0.22, even:0.40, soft:0.20, shine:0.10 },
+       { name: 'MASCARA ALLUNGANTE', url: '/?s=mascara&post_type=product', kind:'mascara', color:'#120d0c' }
    ]
 };
 
@@ -171,7 +181,7 @@ cmp.addEventListener('pointercancel', () => { dragging = false; });
 const LS = 6;    // fattore per maschera, levigatura, luci
 const LE = 16;   // fattore per uniformare il colore della pelle
 function mk() { const c = document.createElement('canvas'); return { c, x: c.getContext('2d') }; }
-const halfL = mk(), blurS = mk(), blurE = mk(), maskS = mk(), tmpS = mk(), tmpE = mk();
+const halfL = mk(), blurS = mk(), blurE = mk(), maskS = mk(), tmpS = mk(), tmpE = mk(), lipM = mk(), lipT = mk();
 
 // ---------- Punti del viso ----------
 const FACE = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
@@ -182,6 +192,9 @@ const LEFT_BROW = [70,63,105,66,107,55,65,52,53,46];
 const RIGHT_BROW = [300,293,334,296,336,285,295,282,283,276];
 const LEFT_LOWER = [33,7,163,144,145,153,154,155,133];
 const RIGHT_LOWER = [362,382,381,380,374,373,390,249,263];
+const LIPS_INNER = [78,191,80,81,82,13,312,311,310,415,308,324,318,402,317,14,87,178,88,95];
+const LEFT_UPPER = [33,246,161,160,159,158,157,173,133];
+const RIGHT_UPPER = [362,398,384,385,386,387,388,466,263];
 
 let dprNow = 1;
 function resizeCanvas() {
@@ -192,6 +205,7 @@ function resizeCanvas() {
     if (canvasElement.width !== w || canvasElement.height !== h) {
         canvasElement.width = w; canvasElement.height = h;
         halfL.c.width = Math.ceil(w / 2); halfL.c.height = Math.ceil(h / 2);
+        [lipM, lipT].forEach(o => { o.c.width = Math.ceil(w / 2); o.c.height = Math.ceil(h / 2); });
         [blurS, maskS, tmpS].forEach(o => { o.c.width = Math.ceil(w / LS); o.c.height = Math.ceil(h / LS); });
         [blurE, tmpE].forEach(o => { o.c.width = Math.ceil(w / LE); o.c.height = Math.ceil(h / LE); });
     }
@@ -288,6 +302,60 @@ function onResults(results) {
         t.x.globalCompositeOperation = 'source-over';
     };
 
+    // Make-up: rossetto e mascara (solo nella parte "DOPO")
+    if (cfg.kind === 'lips') {
+        const k2 = lipM.c.width / W, o = W * 3, m2 = lipM.x;
+        m2.setTransform(1, 0, 0, 1, 0, 0);
+        m2.clearRect(0, 0, lipM.c.width, lipM.c.height);
+        m2.save(); m2.scale(k2, k2);
+        m2.shadowColor = '#000'; m2.shadowOffsetX = o * k2; m2.shadowOffsetY = 0; m2.shadowBlur = 2.5;
+        m2.fillStyle = '#000'; m2.beginPath();
+        [LIPS, LIPS_INNER].forEach(ids => {
+            ids.forEach((idx, i) => { const q = pt(idx); if (i === 0) m2.moveTo(q.x - o, q.y); else m2.lineTo(q.x - o, q.y); });
+            m2.closePath();
+        });
+        m2.fill('evenodd'); m2.restore();
+        lipT.x.globalCompositeOperation = 'source-over';
+        lipT.x.clearRect(0, 0, lipT.c.width, lipT.c.height);
+        lipT.x.fillStyle = cfg.color; lipT.x.fillRect(0, 0, lipT.c.width, lipT.c.height);
+        lipT.x.globalCompositeOperation = 'destination-in';
+        lipT.x.drawImage(lipM.c, 0, 0);
+        lipT.x.globalCompositeOperation = 'source-over';
+        ctx.globalCompositeOperation = 'color'; ctx.globalAlpha = cfg.cover * ap;
+        ctx.drawImage(lipT.c, 0, 0, W, H);
+        ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 0.30 * ap;
+        ctx.drawImage(lipT.c, 0, 0, W, H);
+    }
+    if (cfg.kind === 'mascara') {
+        const fw = Math.hypot(pt(454).x - pt(234).x, pt(454).y - pt(234).y);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 0.55 * ap;
+        ctx.strokeStyle = cfg.color; ctx.lineCap = 'round';
+        [LEFT_UPPER, RIGHT_UPPER].forEach(arr => {
+            ctx.lineWidth = fw * 0.005; ctx.beginPath();
+            arr.forEach((idx, i) => { const q = pt(idx); if (i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y); });
+            ctx.stroke();
+            ctx.lineWidth = Math.max(0.9 * dpr, fw * 0.003);
+            for (let i = 0; i < arr.length - 1; i++) {
+                const a = pt(arr[i]), b = pt(arr[i + 1]);
+                let tx = b.x - a.x, ty = b.y - a.y; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+                let nx = ty, ny = -tx; if (ny > 0) { nx = -nx; ny = -ny; }
+                for (let st = 0; st < 3; st++) {
+                    const t = st / 3, u = (i + t) / (arr.length - 1);
+                    const L = fw * 0.018 * (0.55 + 0.45 * Math.sin(Math.PI * u));
+                    const x0 = a.x + (b.x - a.x) * t, y0 = a.y + (b.y - a.y) * t;
+                    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + nx * L, y0 + ny * L); ctx.stroke();
+                }
+            }
+        });
+    }
+    if (cfg.kind === 'lips' || cfg.kind === 'mascara') {
+        ctx.restore();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+        return;
+    }
+
     // a) Levigatura leggera: attenua le piccole imperfezioni ma lascia la texture
     if (cfg.smooth) {
         tmpS.x.clearRect(0, 0, tmpS.c.width, tmpS.c.height);
@@ -306,6 +374,18 @@ function onResults(results) {
         ctx.globalCompositeOperation = 'color';
         ctx.globalAlpha = Math.min(0.9, cfg.even * INTENSITA) * ap;
         ctx.drawImage(tmpE.c, 0, 0, W, H);
+    }
+
+    // b2) Fondotinta / correttore: porta il colorito verso la tonalità del prodotto
+    if (cfg.cover) {
+        tmpS.x.globalCompositeOperation = 'source-over';
+        tmpS.x.clearRect(0, 0, tmpS.c.width, tmpS.c.height);
+        tmpS.x.fillStyle = cfg.color;
+        tmpS.x.fillRect(0, 0, tmpS.c.width, tmpS.c.height);
+        maskInto(tmpS);
+        ctx.globalCompositeOperation = 'color';
+        ctx.globalAlpha = cfg.cover * ap;
+        ctx.drawImage(tmpS.c, 0, 0, W, H);
     }
 
     // c) Velo di colore del prodotto (molto leggero)
