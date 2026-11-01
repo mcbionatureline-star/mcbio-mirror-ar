@@ -110,13 +110,13 @@ const DATABASE = {
        { name: 'CREMA MANTENIMENTO', url: '/product/crema-intensiva-naturale-di-mantenimento/', color:'#A5E8CF', soft:0.38, shine:0.05, smooth:0.12, even:0.30, glow:0.12 }
    ],
    'makeup': [
-       { name: 'ROSSETTO DUSTY ROSE', url: '/?s=rossetto&post_type=product', kind:'lips', color:'#B8837D', cover:0.50 },
-       { name: 'ROSSETTO TERRACOTTA NUDE', url: '/?s=rossetto&post_type=product', kind:'lips', color:'#C4846F', cover:0.50 },
-       { name: 'FONDOTINTA 10 LIGHT WARM', url: '/?s=fondotinta&post_type=product', color:'#E4CDB8', cover:0.25, smooth:0.20, even:0.40, soft:0.20, shine:0.02 },
-       { name: 'FONDOTINTA 20 MEDIUM NEUTRAL', url: '/?s=fondotinta&post_type=product', color:'#D2AC8A', cover:0.25, smooth:0.20, even:0.40, soft:0.20, shine:0.02 },
-       { name: 'CORRETTORE 10 LIGHT WARM', url: '/?s=correttore&post_type=product', eyesOnly:true, color:'#EFCFA8', cover:0.45, smooth:0.22, even:0.40, soft:0.20, shine:0.10 },
-       { name: 'CORRETTORE 20 MEDIUM WARM', url: '/?s=correttore&post_type=product', eyesOnly:true, color:'#DDA974', cover:0.45, smooth:0.22, even:0.40, soft:0.20, shine:0.10 },
-       { name: 'MASCARA ALLUNGANTE', url: '/?s=mascara&post_type=product', kind:'mascara', color:'#120d0c' }
+       { name: 'ROSSETTO DUSTY ROSE', url: '/?s=rossetto&post_type=product', kind:'lips', color:'#B4586A', cover:0.80 },
+       { name: 'ROSSETTO TERRACOTTA NUDE', url: '/?s=rossetto&post_type=product', kind:'lips', color:'#BE6A4C', cover:0.80 },
+       { name: 'FONDOTINTA 10 LIGHT WARM', url: '/?s=fondotinta&post_type=product', color:'#E9C3A3', cover:0.48, lift:0.25, smooth:0.10, even:0.15, soft:0.20, shine:0.02 },
+       { name: 'FONDOTINTA 20 MEDIUM NEUTRAL', url: '/?s=fondotinta&post_type=product', color:'#D49C74', cover:0.48, deep:0.25, smooth:0.10, even:0.15, soft:0.20, shine:0.02 },
+       { name: 'CORRETTORE 10 LIGHT WARM', url: '/?s=correttore&post_type=product', eyesOnly:true, color:'#F0C4A6', cover:0.62, smooth:0.12, even:0.15, soft:0.20, shine:0.05 },
+       { name: 'CORRETTORE 20 MEDIUM WARM', url: '/?s=correttore&post_type=product', eyesOnly:true, color:'#DDA07A', cover:0.62, smooth:0.12, even:0.15, soft:0.20, shine:0.05 },
+       { name: 'MASCARA ALLUNGANTE E VOLUMIZZANTE', url: '/?s=mascara&post_type=product', kind:'mascara', color:'#120d0c' }
    ]
 };
 
@@ -323,31 +323,54 @@ function onResults(results) {
         lipT.x.globalCompositeOperation = 'source-over';
         ctx.globalCompositeOperation = 'color'; ctx.globalAlpha = cfg.cover * ap;
         ctx.drawImage(lipT.c, 0, 0, W, H);
-        ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 0.30 * ap;
+        ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 0.30 * ap;
+        ctx.drawImage(lipT.c, 0, 0, W, H);
+        ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 0.12 * ap;
         ctx.drawImage(lipT.c, 0, 0, W, H);
     }
     if (cfg.kind === 'mascara') {
         const fw = Math.hypot(pt(454).x - pt(234).x, pt(454).y - pt(234).y);
         ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = 0.55 * ap;
         ctx.strokeStyle = cfg.color; ctx.lineCap = 'round';
-        [LEFT_UPPER, RIGHT_UPPER].forEach(arr => {
-            ctx.lineWidth = fw * 0.005; ctx.beginPath();
-            arr.forEach((idx, i) => { const q = pt(idx); if (i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y); });
-            ctx.stroke();
-            ctx.lineWidth = Math.max(0.9 * dpr, fw * 0.003);
+        ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 1.5 * dpr;
+        // ciglia affusolate (spesse alla base, sottili in punta), fitte, curve verso l'alto e l'esterno
+        const rnd = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+        ctx.fillStyle = cfg.color;
+        const drawLashes = (arr, dir, len, count, baseW, alpha, outerAtStart, seed) => {
+            let cx = 0;
+            arr.forEach(idx => { cx += pt(idx).x; });
+            cx /= arr.length;
+            ctx.globalAlpha = alpha * ap;
+            const w = Math.max(0.9 * dpr, fw * baseW);
             for (let i = 0; i < arr.length - 1; i++) {
                 const a = pt(arr[i]), b = pt(arr[i + 1]);
                 let tx = b.x - a.x, ty = b.y - a.y; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
-                let nx = ty, ny = -tx; if (ny > 0) { nx = -nx; ny = -ny; }
-                for (let st = 0; st < 3; st++) {
-                    const t = st / 3, u = (i + t) / (arr.length - 1);
-                    const L = fw * 0.018 * (0.55 + 0.45 * Math.sin(Math.PI * u));
+                for (let st = 0; st < count; st++) {
+                    const r1 = rnd(seed + i * 31 + st * 7), r2 = rnd(seed + i * 17 + st * 13 + 5);
+                    const t = (st + r1 * 0.6) / count, u = (i + t) / (arr.length - 1);
+                    const outer = outerAtStart ? (1 - u) : u;
+                    const L = fw * len * (0.55 + 0.6 * outer) * (0.75 + 0.5 * r2);
                     const x0 = a.x + (b.x - a.x) * t, y0 = a.y + (b.y - a.y) * t;
-                    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + nx * L, y0 + ny * L); ctx.stroke();
+                    const fan = Math.max(-1.6, Math.min(1.6, (x0 - cx) / (fw * 0.08)));
+                    const c1x = x0 + fan * L * 0.12, c1y = y0 + dir * L * 0.7;
+                    const tipx = x0 + fan * L * 0.45, tipy = y0 + dir * L * 0.97;
+                    ctx.beginPath();
+                    ctx.moveTo(x0 - tx * w / 2, y0 - ty * w / 2);
+                    ctx.quadraticCurveTo(c1x - tx * w * 0.25, c1y - ty * w * 0.25, tipx, tipy);
+                    ctx.quadraticCurveTo(c1x + tx * w * 0.25, c1y + ty * w * 0.25, x0 + tx * w / 2, y0 + ty * w / 2);
+                    ctx.closePath();
+                    ctx.fill();
                 }
             }
+        };
+        [[LEFT_UPPER, true, 1], [RIGHT_UPPER, false, 2]].forEach(([arr, outerAtStart, seed]) => {
+            ctx.globalAlpha = 0.55 * ap; ctx.lineWidth = fw * 0.005; ctx.beginPath();
+            arr.forEach((idx, i) => { const q = pt(idx); if (i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y); });
+            ctx.stroke();
+            drawLashes(arr, -1, 0.044, 8, 0.0019, 0.80, outerAtStart, seed * 100);
         });
+        [[LEFT_LOWER, true, 3], [RIGHT_LOWER, false, 4]].forEach(([arr, outerAtStart, seed]) => drawLashes(arr, 1, 0.022, 4, 0.0016, 0.45, outerAtStart, seed * 100));
+        ctx.shadowBlur = 0;
     }
     if (cfg.kind === 'lips' || cfg.kind === 'mascara') {
         ctx.restore();
@@ -386,6 +409,8 @@ function onResults(results) {
         ctx.globalCompositeOperation = 'color';
         ctx.globalAlpha = cfg.cover * ap;
         ctx.drawImage(tmpS.c, 0, 0, W, H);
+        if (cfg.lift) { ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = cfg.lift * ap; ctx.drawImage(tmpS.c, 0, 0, W, H); }
+        if (cfg.deep) { ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = cfg.deep * ap; ctx.drawImage(tmpS.c, 0, 0, W, H); }
     }
 
     // c) Velo di colore del prodotto (molto leggero)
